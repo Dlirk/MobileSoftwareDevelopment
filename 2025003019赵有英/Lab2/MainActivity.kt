@@ -7,23 +7,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lab2.ui.theme.Lab2Theme
@@ -37,7 +28,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    BusinessCard()
+                    BusinessCardScreen()
                 }
             }
         }
@@ -45,11 +36,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun BusinessCard() {
+fun BusinessCardScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFE6F7F0)), // 浅绿色背景
+            .background(Color(0xFFE6F7F0))
+            .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -57,13 +49,11 @@ fun BusinessCard() {
             name = "赵有英",
             title = "Android 开发学习者"
         )
-
-        Spacer(modifier = Modifier.height(50.dp))
-
+        Spacer(modifier = Modifier.height(40.dp))
         CardBottom(
             phone = "17874647512",
             email = "zhaoyouying@school.com",
-            handle = "@zhaoyouying"
+            social = "@zhaoyouying"
         )
     }
 }
@@ -75,17 +65,19 @@ fun CardTop(name: String, title: String) {
     ) {
         Box(
             modifier = Modifier
-                .size(130.dp)
-                .background(Color(0xFF4CAF50), CircleShape),
+                .size(150.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF4CAF50))
+                .padding(4.dp),
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable._68975f399642b7d50729fe2f5aa13be), 
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "个人头像",
                 modifier = Modifier
-                    .size(120.dp)
+                    .fillMaxSize()
                     .clip(CircleShape),
-                contentScale = ContentScale.Crop
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
             )
         }
 
@@ -95,7 +87,7 @@ fun CardTop(name: String, title: String) {
             text = name,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2E3B37)
+            color = Color(0xFF212121)
         )
 
         Text(
@@ -108,43 +100,60 @@ fun CardTop(name: String, title: String) {
 }
 
 @Composable
-fun CardBottom(phone: String, email: String, handle: String) {
-    Column {
-        ContactRow(icon = Icons.Default.Phone, info = phone)
-        ContactRow(icon = Icons.Default.Email, info = email)
-        ContactRow(icon = Icons.Default.Share, info = handle)
-    }
-}
-
-@Composable
-fun ContactRow(icon: androidx.compose.ui.graphics.vector.ImageVector, info: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp, horizontal = 40.dp),
-        verticalAlignment = Alignment.CenterVertically
+fun CardBottom(phone: String, email: String, social: String) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.Start
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color(0xFF388E3C),
-            modifier = Modifier.size(28.dp)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_menu_call),
+                contentDescription = null,
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = phone,
+                fontSize = 18.sp,
+                color = Color(0xFF212121)
+            )
+        }
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_dialog_email),
+                contentDescription = null,
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = email,
+                fontSize = 18.sp,
+                color = Color(0xFF212121)
+            )
+        }
 
-        Text(
-            text = info,
-            fontSize = 17.sp,
-            color = Color(0xFF333333)
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BusinessCardPreview() {
-    Lab2Theme {
-        BusinessCard()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_menu_share),
+                contentDescription = null,
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = social,
+                fontSize = 18.sp,
+                color = Color(0xFF212121)
+            )
+        }
     }
 }

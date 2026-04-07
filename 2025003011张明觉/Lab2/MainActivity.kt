@@ -60,7 +60,7 @@ fun BusinessCard() {
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "个人头像",
-                modifier = Modifier.size(150.dp)
+                modifier = Modifier.size(200.dp)
             )
 
             Text(
