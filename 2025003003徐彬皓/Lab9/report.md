@@ -1,179 +1,77 @@
-# Lab8 实验报告：Superheroes 安卓应用
 
-## 一、应用整体结构说明
-本应用基于 **Android Jetpack Compose + Material 3** 开发，实现一个展示超级英雄信息的列表应用。整体结构清晰，遵循 Android 官方推荐架构：
+# Lab9 实验报告：为 Dessert Clicker 添加 ViewModel
 
-1. **UI 层**
-   - `MainActivity.kt`：应用入口，负责启动界面
-   - `HeroesScreen.kt`：包含列表、列表项、整体页面布局
-2. **数据层**
-   - `Hero.kt`：英雄数据类
-   - `HeroesRepository.kt`：统一数据源，提供静态英雄列表
-3. **主题层（ui/theme）**
-   - `Color.kt`：颜色配置
-   - `Shape.kt`：形状圆角配置
-   - `Type.kt`：字体与文字样式
-   - `Theme.kt`：主题统一封装
-4. **资源层**
-   - 字符串、图片、字体等资源统一管理
+## 1. ViewModel 在 Android 架构中的作用简述
+ViewModel 是 Android Jetpack 组件之一，专门用于**存储和管理与界面相关的数据**，并**独立于 Activity 或 Fragment 的生命周期**。其核心作用包括：
+- **分离 UI 与业务逻辑**：将数据、状态和业务逻辑从 Activity 中移出，让 UI 只负责显示与事件分发。
+- **状态持久化**：屏幕旋转、语言切换等配置变更时，ViewModel 不会重建，自动保留数据，避免状态丢失。
+- **可测试性提升**：逻辑集中在 ViewModel，不依赖 Context，方便编写单元测试。
+- **生命周期安全**：ViewModel 与 UI 生命周期解绑，不会因 UI 重建而丢失数据。
 
-整个应用采用 **数据驱动 UI** 思想，低耦合、易扩展、易维护。
+## 2. DessertUiState 数据类的字段设计说明
+本次实验创建了 `DessertUiState` 数据类，用于**集中描述界面所有状态**，字段设计如下：
+- **revenue: Int**：总收入，界面顶部显示的金额，是核心业务数据。
+- **dessertsSold: Int**：已售出甜品总数，控制甜品升级规则。
+- **currentDessertIndex: Int**：当前甜品在列表中的索引，用于定位甜品数据。
+- **currentDessertImageId: Int**：当前甜品图片资源 ID，用于界面显示。
+- **currentDessertPrice: Int**：当前甜品单价，用于每次点击计算收入。
 
----
+所有字段均设**默认初始值**，与应用启动状态一致；使用 `data class` 可自动生成 `copy()` 方法，便于**不可变状态更新**，保证 Compose 能正确感知状态变化并触发重组。
 
-## 二、Hero 数据类字段设计与理由
-```kotlin
-data class Hero(
-    @StringRes val nameRes: Int,
-    @StringRes val descriptionRes: Int,
-    @DrawableRes val imageRes: Int
-)
-```
+## 3. DessertViewModel 的设计思路，包括状态管理和方法设计
+### 3.1 状态管理
+- ViewModel 内部使用 `mutableStateOf` 包装 `DessertUiState`，并通过 `by` 委托暴露为 `uiState`。
+- 设置 **private set**，确保**外部只能读取、不能直接修改状态**，所有变更必须通过 ViewModel 方法执行，保证状态一致性。
+- 持有甜品数据源 `desserts`，作为业务逻辑的基础数据。
 
-### 设计字段说明
-1. **nameRes**
-   存储英雄名称的字符串资源 ID，便于国际化与统一管理。
-2. **descriptionRes**
-   存储英雄描述的字符串资源 ID，保持文本资源规范。
-3. **imageRes**
-   存储英雄图片资源 ID，安全、类型安全、便于 Compose 直接加载。
+### 3.2 方法设计
+- **onDessertClicked()**：处理甜品点击事件。计算新收入、新销量，调用判断逻辑更新甜品类型，最后通过 `copy()` 生成新状态对象，触发 UI 更新。
+- **determineDessertToShow(dessertsSold: Int)**：私有业务方法，根据销量判断当前应展示的甜品，逻辑从原 MainActivity 迁移至此，实现 UI 与业务解耦。
 
-### 设计理由
-- 使用**资源 ID**而非硬编码，符合 Android 资源最佳实践
-- 注解 `@StringRes`/`@DrawableRes` 提供编译期检查，减少错误
-- 数据类简洁轻量，适合列表展示场景
+整体设计遵循**单一职责原则**：ViewModel 只负责状态管理与业务逻辑，不持有 Context、不处理 UI 显示。
 
----
+## 4. MainActivity 重构前后对比分析
+### 4.1 重构前
+- 所有状态变量（`revenue`、`dessertsSold`、图片 ID 等）通过 `rememberSaveable` 内联在 Composable 函数中。
+- 甜品点击逻辑、甜品判断逻辑直接写在 UI 回调中，**UI 与业务高度耦合**。
+- 代码混乱、可读性差，配置变更时需手动保存状态，维护成本高。
 
-## 三、HeroesRepository 数据源组织方式
-```kotlin
-object HeroesRepository {
-    val heroes = listOf(...)
-}
-```
+### 4.2 重构后
+- 移除所有 `rememberSaveable`、`mutableStateOf` 状态变量，UI 仅通过 `viewModel()` 获取 ViewModel 实例。
+- UI 仅读取 `viewModel.uiState` 展示数据，点击事件通过 `viewModel.onDessertClicked()` 回调给 ViewModel。
+- 业务逻辑（如甜品升级判断）完全迁移到 ViewModel，MainActivity 仅保留 UI 布局、分享功能，职责清晰。
 
-### 组织方式
-- 使用 **object 单例类**，全局唯一，无需实例化
-- 使用 `listOf()` 创建不可变列表，线程安全、稳定
-- 集中管理所有英雄数据，便于维护与扩展
-- 直接从资源读取，无网络/数据库依赖
+## 5. 重构前后代码结构的区别和感受
+### 5.1 结构区别
+- **重构前**：所有代码集中在 `MainActivity.kt`，状态、逻辑、UI 混杂，无分层。
+- **重构后**：
+  - `MainActivity.kt`：仅负责 UI 组合、事件分发、分享功能。
+  - `DessertViewModel.kt`：管理状态与业务逻辑。
+  - `ui/DessertUiState.kt`：集中定义 UI 状态。
+  - `model/`、`data/`：数据模型与数据源保持独立。
 
-### 优点
-- 数据源与 UI 完全解耦
-- 页面只需调用 `HeroesRepository.heroes` 获取数据
-- 结构简单，适合课程实验静态数据场景
+### 5.2 感受
+重构后代码**结构清晰、职责分明**，符合 Android 架构最佳实践。修改业务逻辑时无需改动 UI 代码，降低出错风险；阅读代码时可快速定位 UI、状态、逻辑所在位置，可维护性大幅提升。同时，ViewModel 自动处理配置变更，无需手动保存状态，开发效率更高。
 
----
+## 6. 遇到的问题与解决过程
+### 6.1 问题1：导入 viewModel() 函数失败
+- **现象**：添加依赖后，Composable 中无法识别 `viewModel()` 方法，提示未导入。
+- **原因**：未正确导入 `androidx.lifecycle.viewmodel.compose.viewModel`。
+- **解决**：手动添加对应 import 语句，同步 Gradle 后正常使用。
 
-## 四、英雄列表项布局实现思路
-列表项 `HeroItem` 采用标准 Compose 组件组合实现：
+### 6.2 问题2：DessertUiState 包路径错误
+- **现象**：ViewModel 无法引用 `DessertUiState`，提示找不到类。
+- **原因**：创建文件时误将 `DessertUiState.kt` 放在 `ui/theme/` 而非 `ui/` 目录。
+- **解决**：调整文件包路径为 `com.example.dessertclicker.ui`，修正 ViewModel 中的 import。
 
-1. **外层卡片**
-   使用 `Card` 组件，设置 `medium` 圆角，提升视觉层次。
-2. **横向布局**
-   使用 `Row` 横向排列：**左侧文字 + 右侧图片**。
-3. **文字区域**
-   使用 `Column` 垂直排列名称与描述。
-4. **图片区域**
-   固定大小 72.dp，设置 8.dp 圆角，保持美观统一。
-5. **间距与对齐**
-   整体高度 72.dp，内边距 16.dp，布局整齐规范。
+### 6.3 问题3：屏幕旋转后状态丢失
+- **现象**：重构初期，旋转屏幕后收入、销量重置为 0。
+- **原因**：误将状态变量写在 Composable 内部，而非 ViewModel 中。
+- **解决**：删除 UI 中所有状态变量，统一由 ViewModel 管理，旋转后状态正常保留。
 
-### 视觉样式
-- 名称：`displaySmall` 粗体
-- 描述：`bodyLarge` 常规体
-- 图片：居中裁剪，圆角美化
-
----
-
-## 五、LazyColumn 列表实现和间距配置说明
-```kotlin
-LazyColumn(
-    contentPadding = PaddingValues(16.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp)
-)
-```
-
-### 实现说明
-- 使用 **LazyColumn** 实现高性能滚动列表
-- 只渲染屏幕可见项，适合长列表展示
-- 使用 `items` 方法遍历数据源
-
-### 间距配置
-- `contentPadding = 16.dp`：列表整体四周留白
-- `spacedBy(8.dp)`：列表项之间统一间距，界面整洁
-
----
-
-## 六、Material 主题配置说明
-应用使用 Material 3 主题体系，统一颜色、文字、形状风格。
-
-### 1. 颜色
-- 配置**浅色/深色**两套配色方案
-- 自动跟随系统模式切换
-- 主色、背景色、文字色符合可读性与设计规范
-
-### 2. 字体
-- 使用 `Cabin` 字体
-- 定义多级文字样式：`displayLarge`、`displaySmall`、`bodyLarge`
-- 顶部栏、标题、内容文字层级清晰
-
-### 3. 形状
-- small：8.dp
-- medium：16.dp（卡片圆角）
-- large：16.dp
-
-统一圆角风格，提升整体视觉一致性。
-
----
-
-## 七、顶部应用栏和状态栏处理说明
-1. **使用 Scaffold + TopAppBar**
-   构建标准顶部应用栏，结构规范。
-2. **标题居中**
-   文字样式 `displayLarge`，视觉突出。
-3. **颜色使用主题主色**
-   保持整体风格统一。
-4. **状态栏适配**
-   - 状态栏颜色与背景同步
-   - 自动根据深色/浅色模式切换图标亮度
-   - 实现无边栏沉浸式效果
-
----
-
-## 八、遇到的问题与解决过程
-
-### 问题 1：大量 Unresolved reference 报错
-- **原因**：代码包名与项目实际包名不一致
-- **解决**：统一改为 `com.example.myapplication8`，修正所有导入路径
-
-### 问题 2：字体资源 R.font 找不到
-- **原因**：字体文件名包含大写字母与横杠
-- **解决**：重命名为 `cabin_regular.ttf`、`cabin_bold.ttf`
-
-### 问题 3：SuperheroesTheme 找不到
-- **原因**：缺少 theme 文件夹或文件不完整
-- **解决**：重新创建 Color、Shape、Type、Theme 四个文件
-
-### 问题 4：strings.xml 资源缺失
-- **原因**：未添加 hero1~hero6、description 等资源
-- **解决**：补全所有字符串资源
-
-### 问题 5：@Composable 调用上下文错误
-- **原因**：Composable 函数嵌套不规范
-- **解决**：调整结构，确保主题在 `setContent` 内正确调用
-
----
-
-## 九、实验总结
-本次实验完成了一个完整的 Compose 列表应用，掌握了以下内容：
-- Jetpack Compose 基础组件使用
-- 数据类与数据源设计
-- LazyColumn 高性能列表实现
-- Material 3 主题体系配置
-- 资源文件规范与使用
-- 常见错误排查方法
-
-应用运行稳定，界面美观，完全符合实验要求。
+### 6.4 问题4：甜品升级逻辑异常
+- **现象**：销量达标后甜品未自动升级。
+- **原因**：ViewModel 中 `determineDessertToShow` 循环逻辑判断错误。
+- **解决**：修正循环逻辑，遍历列表找到最后一个满足销量条件的甜品，问题解决。
 
 ---
