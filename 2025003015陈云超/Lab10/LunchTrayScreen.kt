@@ -31,9 +31,6 @@ import com.example.lunchtray.ui.OrderViewModel
 import com.example.lunchtray.ui.SideDishMenuScreen
 import com.example.lunchtray.ui.StartOrderScreen
 
-// ==========================
-// 任务2：导航页面枚举
-// ==========================
 enum class LunchTrayScreen(@StringRes val title: Int) {
     Start(R.string.app_name),
     Entree(R.string.choose_entree),
@@ -42,9 +39,7 @@ enum class LunchTrayScreen(@StringRes val title: Int) {
     Checkout(R.string.order_checkout)
 }
 
-// ==========================
-// 任务4：顶部导航栏 AppBar
-// ==========================
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LunchTrayAppBar(
@@ -72,9 +67,6 @@ fun LunchTrayAppBar(
     )
 }
 
-// ==========================
-// 任务3 + 任务5：主程序 & 导航路由
-// ==========================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LunchTrayApp(
