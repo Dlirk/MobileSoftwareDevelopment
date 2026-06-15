@@ -1,26 +1,26 @@
-# FlightSearch 航班搜索项目说明文档
+# FlightSearch 项目开发说明文档
 
-## 项目概述
-FlightSearch 是一款基于 Jetpack Compose 开发的 Android 本地航班查询应用，采用 MVVM 架构模式，实现了机场搜索、航线浏览、收藏管理等核心功能，所有数据均在本地持久化存储。
+## 项目简介
+FlightSearch 是一款基于 Android 原生开发的本地航班查询工具，采用 Jetpack Compose 构建 UI 界面，依托本地 SQLite 数据库存储机场与航线数据，支持搜索、收藏、状态恢复等核心功能，整体遵循 MVVM 架构设计规范。
 
-## 核心功能
-- 机场模糊搜索：支持输入 IATA 代码或机场名称进行匹配，结果按旅客吞吐量降序排列
-- 目的地航线展示：选中出发机场后，自动加载所有可选目的地机场列表
-- 收藏航线管理：支持一键添加/取消收藏航线，收藏数据本地持久化
-- 搜索状态恢复：应用重启后自动还原上次输入的搜索内容，无需重复输入
+## 功能模块
+1. 机场搜索模块
+支持通过 IATA 三字代码或机场名称进行模糊检索，检索结果默认按照机场旅客吞吐量从高到低排序，方便用户快速定位热门机场。
 
-## 技术栈
-- UI 框架：Jetpack Compose + Material3 设计规范
-- 架构模式：MVVM + 单向数据流
-- 本地数据库：原生 SQLiteOpenHelper 实现预打包数据库读取
-- 轻量存储：DataStore Preferences 存储用户搜索偏好
-- 异步方案：Kotlin Coroutines + StateFlow 实现响应式状态管理
+2. 航线展示模块
+选中出发机场后，页面自动展示所有可选目的地机场的航线列表，每条航线清晰展示出发地与目的地的完整名称及对应代码。
+
+3. 收藏管理模块
+用户可将常用航线加入收藏列表，支持一键添加与移除操作，收藏数据持久化保存在本地数据库，重启应用后数据不会丢失。
+
+4. 状态恢复模块
+用户输入的搜索内容会自动保存在本地存储，下次打开应用时自动填充搜索框，减少重复输入操作，提升整体使用体验。
+
+## 技术架构
+UI层使用 Jetpack Compose + Material3 设计体系，实现声明式 UI 开发；视图层通过 ViewModel + StateFlow 管理页面状态，保证数据与界面的一致性；数据层通过 SQLiteOpenHelper 管理本地数据库，搭配 DataStore 处理轻量偏好存储；异步任务全部通过 Kotlin 协程调度，避免阻塞主线程。
 
 ## 数据库设计
-1. airport 表：存储所有机场基础信息，包含 id、iata_code、name、passengers 字段
-2. favorite 表：存储用户收藏的航线，包含 id、departure_code、destination_code 字段，设置联合唯一约束
+项目包含两张核心数据表。airport 表存储机场基础信息，字段包括主键 id、IATA 代码、机场名称、旅客吞吐量。favorite 表存储用户收藏航线，字段包括主键 id、出发机场代码、目的地机场代码，同时设置出发地与目的地的联合唯一约束，避免重复收藏。
 
-## 运行环境要求
-- 最低支持系统：Android 8.0（API Level 26）
-- 编译环境：Android Studio 新版本 + Kotlin 2.0+
-- 编译 SDK：Android API 36
+## 运行环境
+最低兼容系统为 Android 8.0（API 26），编译 SDK 版本为 Android API 36，开发语言为 Kotlin 2.2.10，构建工具使用 Gradle 9.3.1。
