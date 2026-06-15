@@ -10,4 +10,16 @@ data class Airport(
     @ColumnInfo(name = "iata_code") val iataCode: String,
     val name: String,
     val passengers: Int,
-)
+) {
+    val displayName: String
+        get() = "$iataCode - $name"
+
+    val passengerLabel: String
+        get() = "%d passengers".format(passengers)
+
+    fun matches(query: String): Boolean {
+        if (query.isBlank()) return false
+        return iataCode.contains(query, ignoreCase = true) ||
+            name.contains(query, ignoreCase = true)
+    }
+}
